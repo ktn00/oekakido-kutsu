@@ -1,90 +1,89 @@
 const canvas = document.getElementById('drawingCanvas');
 const ctx = canvas.getContext('2d');
+const undoButton = document.getElementById('undoButton');
+const penButton = document.getElementById('penButton');
+const eraserButton = document.getElementById('eraserButton');
+const lineWidthSlider = document.getElementById('lineWidth');
 
-let drawing = false;
+let isDrawing = false;
 let lastX = 0;
 let lastY = 0;
-const history = [];
+const drawingHistory = [];
 let historyStep = 0;
+let isErasingMode = false;
+const defaultPenColor = 'black';
+
+let penWidth = 3;
+let eraserWidth = 10;
 
 canvas.width = 800;
 canvas.height = 600;
 
-ctx.strokeStyle = 'black';
-ctx.lineWidth = 2;
+ctx.strokeStyle = defaultPenColor;
+ctx.lineWidth = penWidth;
 ctx.lineJoin = 'round';
 ctx.lineCap = 'round';
 
-function saveHistory() {
-    history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
-    historyStep = history.length - 1;
-    if (history.length > 50) {
-        history.shift();
+function saveDrawingHistory() {
+    drawingHistory.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    historyStep = drawingHistory.length - 1;
+    if (drawingHistory.length > 50) {
+        drawingHistory.shift();
         historyStep--;
     }
 }
 
-function restoreHistory() {
+function restoreDrawingHistory() {
     if (historyStep >= 0) {
-        ctx.putImageData(history[historyStep], 0, 0);
+        ctx.putImageData(drawingHistory[historyStep], 0, 0);
     } else {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 }
 
-canvas.addEventListener('mousedown', (e) => {
-    drawing = true;
+function startDrawing(e) {
+    isDrawing = true;
     lastX = e.offsetX;
     lastY = e.offsetY;
     e.preventDefault();
-});
+}
 
-canvas.addEventListener('mousemove', (e) => {
-    if (!drawing) return;
+function moveDrawing(e) {
+    if (!isDrawing) return;
+    const currentX = e.offsetX;
+    const currentY = e.offsetY;
     ctx.beginPath();
     ctx.moveTo(lastX, lastY);
-    ctx.lineTo(e.offsetX, e.offsetY);
+    ctx.lineTo(currentX, currentY);
     ctx.stroke();
-    lastX = e.offsetX;
-    lastY = e.offsetY;
-});
+    lastX = currentX;
+    lastY = currentY;
+}
 
-canvas.addEventListener('mouseup', () => {
-    drawing = false;
-    saveHistory();
-});
+function stopDrawing() {
+    isDrawing = false;
+    saveDrawingHistory();
+}
 
-canvas.addEventListener('mouseout', () => {
-    drawing = false;
-});
-
-canvas.addEventListener('touchstart', (e) => {
+function handleTouchStart(e) {
     if (e.touches.length > 0) {
-        drawing = true;
+        isDrawing = true;
         lastX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
         lastY = e.touches[0].clientY - canvas.getBoundingClientRect().top;
         e.preventDefault();
     }
-});
+}
 
-canvas.addEventListener('touchmove', (e) => {
-    if (!drawing || e.touches.length === 0) return;
+function handleTouchMove(e) {
+    if (!isDrawing || e.touches.length === 0) return;
     const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
     const touchY = e.touches[0].clientY - canvas.getBoundingClientRect().top;
     draw(touchX, touchY);
     e.preventDefault();
-});
-
-canvas.addEventListener('touchend', () => {
-    drawing = false;
-    saveHistory();
-});
-
-canvas.addEventListener('touchcancel', () => {
-    drawing = false;
-});
+}
 
 function draw(x, y) {
+    ctx.lineWidth = lineWidthSlider.value;
     ctx.beginPath();
     ctx.moveTo(lastX, lastY);
     ctx.lineTo(x, y);
@@ -96,9 +95,48 @@ function draw(x, y) {
 undoButton.addEventListener('click', () => {
     if (historyStep > 0) {
         historyStep--;
-        restoreHistory();
+        restoreDrawingHistory();
     }
 });
 
-saveHistory();
-restoreHistory();
+penButton.addEventListener('click', () => {
+    isErasingMode = false;
+    ctx.strokeStyle = defaultPenColor;
+    ctx.lineWidth = penWidth;
+    lineWidthSlider.value = penWidth;
+    penButton.classList.add('active');
+    eraserButton.classList.remove('active');
+});
+
+eraserButton.addEventListener('click', () => {
+    isErasingMode = true;
+    ctx.strokeStyle = getComputedStyle(canvas).backgroundColor;
+    ctx.lineWidth = eraserWidth;
+    lineWidthSlider.value = eraserWidth;
+    eraserButton.classList.add('active');
+    penButton.classList.remove('active');
+});
+
+lineWidthSlider.addEventListener('input', () => {
+    const newLineWidth = parseInt(lineWidthSlider.value);
+    if (isErasingMode) {
+        eraserWidth = newLineWidth;
+    } else {
+        penWidth = newLineWidth;
+    }
+    ctx.lineWidth = newLineWidth;
+});
+
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', moveDrawing);
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('mouseout', stopDrawing);
+
+canvas.addEventListener('touchstart', handleTouchStart);
+canvas.addEventListener('touchmove', handleTouchMove);
+canvas.addEventListener('touchend', stopDrawing);
+canvas.addEventListener('touchcancel', stopDrawing);
+
+penButton.classList.add('active');
+saveDrawingHistory();
+restoreDrawingHistory();
