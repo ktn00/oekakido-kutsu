@@ -7,7 +7,13 @@
 <body>
 	<h1>お絵描き洞窟</h1>
 	<canvas id="drawingCanvas"></canvas>
-	<button id="undoButton">Undo</button>
+	<div class="controls">
+		<button id="undoButton">もどる</button>
+		<button id="penButton">ぺん</button>
+		<button id="eraserButton">消しごむ</button>
+		<label for="lineWidth">線の太さ:</label>
+        	<input type="range" id="lineWidth" min="1" max="20" value="3">
+	</div>
 	<script src="script.js"></script>
 </body>
 </html>
