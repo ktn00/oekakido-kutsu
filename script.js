@@ -129,13 +129,20 @@ lineWidthSlider.addEventListener('input', () => {
 
 canvas.addEventListener('mousedown', startDrawing);
 canvas.addEventListener('mousemove', moveDrawing);
-canvas.addEventListener('mouseup', stopDrawing);
-canvas.addEventListener('mouseout', stopDrawing);
+canvas.addEventListener('mouseup', stopDrawing); // ここで履歴保存
+canvas.addEventListener('mouseout', () => {
+    if (isDrawing) {
+        stopDrawing(); // mouseout時も描画が終了していれば履歴保存
+    }
+    isDrawing = false;
+});
 
 canvas.addEventListener('touchstart', handleTouchStart);
 canvas.addEventListener('touchmove', handleTouchMove);
-canvas.addEventListener('touchend', stopDrawing);
-canvas.addEventListener('touchcancel', stopDrawing);
+canvas.addEventListener('touchend', stopDrawing); // ここで履歴保存
+canvas.addEventListener('touchcancel', () => {
+    isDrawing = false;
+});
 
 penButton.classList.add('active');
 saveDrawingHistory();
