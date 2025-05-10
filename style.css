@@ -1,0 +1,17 @@
+body {
+    margin: 0;
+    overflow: hidden; 
+}
+
+h1{
+	text-align: center;
+	margin-top: 10px;
+}
+
+#drawingCanvas {
+    border: 1px solid black;
+    position: fixed; 
+    top: 10%; 
+    left: 50%; 
+    transform: translateX(-50%); 
+}
